@@ -47,6 +47,7 @@
 2.运行时序：IDLE → START_BIT：当检测到rx_synced变为0（起始位）时进入接收状态。START_BIT → DATA_BIT：在起始位的中点（CLK_COUNT/2 - 1）采样，如果仍然是0，则确认是起始位，进入数据位接收；否则认为是干扰，返回空闲状态。DATA_BIT → STOP_BIT：接收完8个数据位后STOP_BIT → IDLE：接收完停止位后。  
 3.输出有效信号：在停止位状态，当clk_count为0时，表示刚刚进入停止位，此时发出一个时钟周期的高脉冲，表示数据有效。  
 4.数据接收：在数据位状态，每个数据位的最后一个时钟周期（即CLK_COUNT-1）对rx_synced进行采样，并存储到o_data的相应位中。数据位从最低位（bit_count=0）开始接收。  
+
 **fifo()运行逻辑**  
 1.写操作：当i_write_en为高且o_full为低时，将i_write_data写入memory[write_addr]，写指针递增（地址位溢出时翻转循环位）。  
 2.读操作：当i_read_en为高且o_empty为低时，将memory[read_addr]输出到o_read_data，读指针递增（地址位溢出时翻转循环位）。  
