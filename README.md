@@ -35,13 +35,13 @@
 |  uart_rx()    | 异步串行通信（UART）的接收器模块，用于将串行数据转换为并行数据接收进来。  |CLK_COUNT：波特率分频系数，每个位持续868个时钟周期868；BIT_COUNT：固定为8位数据位 |
 
 uart_tx()运行逻辑：
-1.数据储存：  定义[8:0]数据寄存器。
-2.运行时序：  
+数据储存：定义[8:0]数据寄存器。
+运行时序：  
   IDLE → START_BIT：当i_write_en有效时进入发送状态。          
   START_BIT → DATA_BIT：发送完起始位后（经过CLK_COUNT个时钟）。
   DATA_BIT → STOP_BIT：发送完8个数据位后。
   STOP_BIT → IDLE：发送完停止位后。
-3.数据输出：   
+数据输出：   
 
 
 #### IIC
