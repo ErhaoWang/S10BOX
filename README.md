@@ -36,12 +36,8 @@
 
 uart_tx()运行逻辑  
 1.数据储存：定义[8:0]数据寄存器。  
-2.运行时序：  
-   <1>IDLE → START_BIT：当i_write_en有效时进入发送状态。  
-   <2>START_BIT → DATA_BIT：发送完起始位后（经过CLK_COUNT个时钟）。  
-   <3>DATA_BIT → STOP_BIT：发送完8个数据位后。  
-   <4>STOP_BIT → IDLE：发送完停止位后。  
-3.数据输出：   
+2.运行时序：   <1>IDLE → START_BIT：当i_write_en有效时进入发送状态。  <2>START_BIT → DATA_BIT：发送完起始位后（经过CLK_COUNT个时钟）。  <3>DATA_BIT → STOP_BIT：发送完8个数据位后。  <4>STOP_BIT → IDLE：发送完停止位后。  
+3.数据输出： 开始输出时，o_tx信号置0，o_tx信号串行输出储存的八位数据，当停止位和空闲时o_tx为1。
 
 
 #### IIC
