@@ -36,9 +36,11 @@
 
 **uart_tx()运行逻辑**  
 1.数据储存：定义[8:0]数据寄存器。  
-2.运行时序：   <1>IDLE → START_BIT：当i_write_en有效时进入发送状态。  <2>START_BIT → DATA_BIT：发送完起始位后（经过CLK_COUNT个时钟）。  <3>DATA_BIT → STOP_BIT：发送完8个数据位后。  <4>STOP_BIT → IDLE：发送完停止位后。  
+2.运行时序：<1>IDLE → START_BIT：当i_write_en有效时进入发送状态。  <2>START_BIT → DATA_BIT：发送完起始位后（经过CLK_COUNT个时钟）。  <3>DATA_BIT → STOP_BIT：发送完8个数据位后。  <4>STOP_BIT → IDLE：发送完停止位后。  
 3.数据输出： 开始输出时，o_tx信号置0，o_tx信号串行输出储存的八位数据，当停止位和空闲时o_tx为1。
-
+**uart_rx()运行逻辑**  
+1.同步器：对异步输入信号i_rx进行两级触发器同步，得到rx_synced。复位时初始化为1（UART空闲时为高电平）。  
+2.运行时序：
 
 #### IIC
 
