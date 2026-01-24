@@ -52,7 +52,7 @@
 **卷积神经网络模型训练**
 
 <img src="https://github.com/ErhaoWang/S10BOX/blob/main/作图/训练流程图.png" width="500" height="2000" />
-
+并且将训练后的权重数值分别保存到conv1.txt、conv2.txt、conv3.txt、fc.txt中。
 
 
 
