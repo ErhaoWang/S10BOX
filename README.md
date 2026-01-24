@@ -50,7 +50,7 @@
 反向：自定义梯度传递规则，中间区域有梯度，两端为0。  
 
 **卷积神经网络模型训练**
-
+![图像描述](https://github.com/ErhaoWang/S10BOX/blob/main/作图/训练流程图.png)
 
 
 
