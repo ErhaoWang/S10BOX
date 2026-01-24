@@ -98,4 +98,7 @@
 | ------------- |------------------|-----------------------------------------|
 |   iic()    | 支持对I²C从设备进行读写操作。  |DEVICE_ADDR: 7位I²C从设备地址；ADDR_WIDTH: 地址宽度（8或16位） |  
 
-运行时序：IDLE → START（起始条件）。START → DEVICE_ADDR_0（发送设备地址+写位）。DEVICE_ADDR_0 → REG_ADDR（发送寄存器地址）。REG_ADDR → WRITE_DATA（写入数据）。WRITE_DATA → STOP（停止条件）。
+运行时序：  
+写操作流程：IDLE → START（起始条件）。START → DEVICE_ADDR_0（发送设备地址+写位）。DEVICE_ADDR_0 → REG_ADDR（发送寄存器地址）。REG_ADDR → WRITE_DATA（写入数据）。WRITE_DATA → STOP（停止条件）。  
+读操作流程：IDLE → START（起始条件）。START → DEVICE_ADDR_0（发送设备地址+写位）。DEVICE_ADDR_0 → REG_ADDR（发送寄存器地址）。REG_ADDR → RE_START（重复起始条件）。RE_START → DEVICE_ADDR_1（发送设备地址+读位）。DEVICE_ADDR_1 → READ_DATA（读取数据）。READ_DATA → STOP（停止条件）。
+
