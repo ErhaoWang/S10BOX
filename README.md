@@ -96,5 +96,6 @@
 #### IIC
 | 核心模块       | 功能描述           |参数说明                                  | 
 | ------------- |------------------|-----------------------------------------|
-|   iic()    | 同步通信模块，支持对I²C从设备进行读写操作。  |DEVICE_ADDR: 7位I²C从设备地址；ADDR_WIDTH: 地址宽度（8或16位） |  
+|   iic()    | 支持对I²C从设备进行读写操作。  |DEVICE_ADDR: 7位I²C从设备地址；ADDR_WIDTH: 地址宽度（8或16位） |  
 
+运行时序：IDLE → START（起始条件）。START → DEVICE_ADDR_0（发送设备地址+写位）。DEVICE_ADDR_0 → REG_ADDR（发送寄存器地址）。REG_ADDR → WRITE_DATA（写入数据）。WRITE_DATA → STOP（停止条件）。
