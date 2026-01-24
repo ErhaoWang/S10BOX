@@ -51,7 +51,7 @@
 
 **卷积神经网络模型训练**
 
-<img src="https://github.com/ErhaoWang/S10BOX/blob/main/作图/训练流程图.png" width="300" height="200" />
+<img src="https://github.com/ErhaoWang/S10BOX/blob/main/作图/训练流程图.png" width="500" height="2000" />
 
 
 
