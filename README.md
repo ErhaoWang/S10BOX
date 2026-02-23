@@ -10,6 +10,9 @@
     - [uart](#uart)
     - [IIC](#IIC)
 - [S10芯片](#S10芯片)
+  - [CIM](#CIM)
+  - [CIP](#CIP)
+    
 ## PC端
 
 ### uart通信
@@ -103,3 +106,17 @@
 读操作流程：IDLE → START（起始条件）。START → DEVICE_ADDR_0（发送设备地址+写位）。DEVICE_ADDR_0 → REG_ADDR（发送寄存器地址）。REG_ADDR → RE_START（重复起始条件）。RE_START → DEVICE_ADDR_1（发送设备地址+读位）。DEVICE_ADDR_1 → READ_DATA（读取数据）。READ_DATA → STOP（停止条件）。
 
 ## S10芯片
+### CIP 
+传感器模式（mode=0）：  
+clk_img 有效，传感器时序计数器运行，按行扫描产生行选、复位、CDS控制信号，同时曝光时间寄存器可被写入。当外部发出读使能时，三值结果被串行读出。  
+
+计算模式（mode=1）：  
+clk_img 无效，传感器部分计数器保持复位状态（count_sensor=0, count_row=31, count_col=31），所有传感器控制信号清零。CIP的控制信号直接由片外输入提供，芯片进入计算状态。  
+
+权重与CCAP写入：  
+独立于模式，任何时候均可通过 wgt_in_en 和串行输入 wgt_input 配置权重和CCAP寄存器。  
+
+结果读出：  
+由 rdout_en_cip 触发，将10位并行三值结果串行输出至片外。
+
+### CIM
