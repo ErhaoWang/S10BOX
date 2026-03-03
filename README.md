@@ -9,6 +9,10 @@
   - [通信](#通信)
     - [uart](#uart)
     - [IIC](#IIC)
+  - [时钟模块](#时钟模块)
+  - [卷积数据交互](#卷积数据交互)
+    - [CIP数据](#CIP数据)
+    - [CIM数据](#CIM数据)
 - [S10芯片](#S10芯片)
   - [CIM](#CIM)
   - [CIP](#CIP)
@@ -104,6 +108,17 @@
 运行时序：  
 写操作流程：IDLE → START（起始条件）。START → DEVICE_ADDR_0（发送设备地址+写位）。DEVICE_ADDR_0 → REG_ADDR（发送寄存器地址）。REG_ADDR → WRITE_DATA（写入数据）。WRITE_DATA → STOP（停止条件）。  
 读操作流程：IDLE → START（起始条件）。START → DEVICE_ADDR_0（发送设备地址+写位）。DEVICE_ADDR_0 → REG_ADDR（发送寄存器地址）。REG_ADDR → RE_START（重复起始条件）。RE_START → DEVICE_ADDR_1（发送设备地址+读位）。DEVICE_ADDR_1 → READ_DATA（读取数据）。READ_DATA → STOP（停止条件）。
+
+### 时钟模块
+通过计数器对输入时钟进行分频，其中 1 MHz 和 5 MHz 采用计数翻转法，25 MHz 采用简单的 T 触发器二分频。  
+
+### 卷积数据交互
+#### CIP数据
+
+#### CIM数据
+
+
+
 
 ## S10芯片
 ### CIP 
