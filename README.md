@@ -150,29 +150,25 @@ Pixel电路：
 当 addr_in_en 有效时，每个时钟周期将 addr_in 移入 ADDR_REG（低位在先）。当 data_in_en 有效时，每个时钟周期将 data_in 移入 DATA_REG。这两个寄存器保存待写入 SRAM 的地址和数据。  
 
 SRAM 写操作：  
-当 write_en 为高时，WL_EN 和 BL_EN 被置为 1，其余控制信号保持默认。根据当前 select，对应的字线使能信号（CONV2_WL_EN 等）有效，字线生成逻辑将 ADDR_REG 译码为独热码输出到芯片的 WL 端口。同时，DATA_REG 的低位部分（根据 select 取不同宽度）通过 conv2_bl_data 等输出到位线数据端口。芯片在 WL 和 BL 有效时将数据写入存储阵列。  
+当 write_en 为高时，WL_EN 和 BL_EN 被置为 1，其余控制信号保持默认。根据当前 select，对应的字线使能信号（CONV2_WL_EN ）有效，字线生成逻辑将 ADDR_REG 译码为独热码输出到芯片的 WL 端口。同时，DATA_REG 的低位部分通过 conv2_bl_data 等输出到位线数据端口。芯片在 WL 和 BL 有效时将数据写入存储阵列。  
 
 SRAM 读操作：  
-当 read_en 有效时，状态机（READ_counter）开始三步操作。第一个周期：PRE_SRAM 置 0（可能用于预放电），READ_counter=01。第二个周期：WL_EN=1, PRE_SRAM=1, OTA_EN=1，使能字线和读出放大器，READ_counter=10。第三个周期：根据 select 将芯片返回的并行数据（conv2_readout 等）锁存到 READOUT_REG 的对应位宽部分，READ_counter=11。此后每个时钟周期将 READOUT_REG 循环右移，其最高位通过 readout 串行输出。该过程持续直到 read_en 撤销。若 read_en 为低，所有控制信号复位。 
+当 read_en 有效时，状态机（READ_counter）开始三步操作。第一个周期：PRE_SRAM 置 0，READ_counter=01。第二个周期：WL_EN=1, PRE_SRAM=1, OTA_EN=1，使能字线和读出放大器，READ_counter=10。第三个周期：根据 select 将芯片返回的并行数据锁存到 READOUT_REG 的对应位宽部分，READ_counter=11。此后每个时钟周期将 READOUT_REG 循环右移，其最高位通过 readout 串行输出。该过程持续直到 read_en 撤销。若 read_en 为低，所有控制信号复位。 
 
 计算输入（激活值）加载：  
 当 cim_in_en 有效时，开始串行接收两路输入（in1 和 in0）。位宽由 select 决定：conv2 为 90 位，conv3 为 288 位，fc 为 1152 位。前 CIM_IN_COUNT 个周期，数据移入 CIM_IN_REG1（第一路）；之后继续移入 CIM_IN_REG0（第二路）。CIM_IN_counter 计数已接收的位数，达到后自动切换目标寄存器。接收完成后，两路数据分别通过 conv2_in1/in0 等端口输出到芯片。  
 
-计算启动与控制：  
-当 compute_en 有效时，产生计算时序。第一个周期：PRECHARGE=1（预充电），COMPUTE_flag=1。之后周期：CLK_CMP=1（比较器时钟），PRECHARGE 保持？实际上代码中第二个周期仅置 CLK_CMP，PRECHARGE 未清零，但通常预充电只需一个周期，这里可能持续？需注意逻辑：COMPUTE_flag 在第二个周期不再增加，所以 CLK_CMP 一直为 1 直到 compute_en 撤销。这可能意味着计算期间持续提供时钟。这些信号通过多路选择器送到对应单（conv2_precharge, conv2_clk_cmp 等）。  
-
-计算结果输出（conv2/conv3）：  
-当 cim_out_en 有效且 select 为 conv2 或 conv3 时。第一个周期：将芯片返回的并行结果（conv2_out1/0 或 conv3_out1/0）拼成 64 位存入 CIM_OUT_REG，CIM_OUT_flag=1。后续每个周期将 CIM_OUT_REG 循环右移，最高位通过 cim_out 串行输出。该过程持续直到 cim_out_en 撤销。  
+计算启动与结果输出：  
+当 compute_en 有效时，产生计算时序。当 cim_out_en 有效且 select 为 conv2 或 conv3 时。第一个周期：将芯片返回的并行结果（conv2_out1/0 或 conv3_out1/0）拼成 64 位存入 CIM_OUT_REG，CIM_OUT_flag=1。后续每个周期将 CIM_OUT_REG 循环右移，最高位通过 cim_out 串行输出。该过程持续直到 cim_out_en 撤销。  
 
 全连接层比较输出：  
-全连接层输出通过比较器找出最大值。芯片内部有 10 个寄存器（索引 0~9），需要两两比较，最终得到最大值的索引。其控制逻辑为，初始 FC_REGA=0, FC_REGB=1, fc_maxout=0。当 fc_out_en 有效且 select=10 时，开始 9 轮比较（FC_OUT_counter 从 0 到 8）。每轮先产生 fc_clk_cmp 脉冲（第一个周期置 1，第二个周期清 0），同时输出当前两个寄存器的独热码（fc_rega_onehot, fc_regb_onehot）给芯片。芯片比较后返回 fc_cmp_out（1 表示 A 大于 B，0 表示 B 大于 A）。根据比较结果更新 fc_maxout 为较大者的索引，并更新下一对比较的寄存器。若 A 大，则保留 A，B 递增（B = B+1），继续用 A 与下一个比较。若 B 大，则保留 B，A 递增（A = A+1），继续用 B 与下一个比较。经过 9 轮后，fc_maxout 即为最大值的索引。  
+全连接层输出通过比较器找出最大值。芯片内部有 10 个寄存器（索引 0~9），需要两两比较，最终得到最大值的索引。其控制逻辑为，初始 FC_REGA=0, FC_REGB=1, fc_maxout=0。当 fc_out_en 有效且 select=10 时，开始 9 轮比较（FC_OUT_counter 从 0 到 8）。每轮先产生 fc_clk_cmp 脉冲，同时输出当前两个寄存器的独热码（fc_rega_onehot, fc_regb_onehot）给芯片。芯片比较后返回 fc_cmp_out（1 表示 A 大于 B，0 表示 B 大于 A）。根据比较结果更新 fc_maxout 为较大者的索引，并更新下一对比较的寄存器。若 A 大，则保留 A，B 递增（B = B+1），继续用 A 与下一个比较。若 B 大，则保留 B，A 递增（A = A+1），继续用 B 与下一个比较。经过 9 轮后，fc_maxout 即为最大值的索引。  
 
 #### 模拟电路
 conv2层： 分为Inputdirver、SRAM、Comparator部分。Inputdriver部分接收FPGA写入的激活值，SRAM中90×32构成filter部分，Comparator部分比较每一列的电流得到三元值。
 
 conv3层：分为Inputdirver、SRAM、Comparator部分。Inputdriver部分接收FPGA写入的激活值，SRAM中288×32构成filter部分，Comparator部分比较每一列的电流得到三元值。
 
-FC层： 分为Inputdirver、SRAM、Outselect部分。Inputdriver部分接收FPGA写入的激活值，由于数据已经经过展平，SRAM中1152×10构成filter部分，Outselect通过比较10列输出10个模拟数字值作为分累结果。
-
+FC层： 分为Inputdirver、SRAM、Outselect部分。Inputdriver部分接收FPGA写入的激活值，由于数据已经经过展平，SRAM中1152×10构成filter部分，Outselect通过比较10列输出10个模拟数字值作为分累结果。  
 
 ## PMU
