@@ -1,0 +1,189 @@
+//Verilog HDL for "AdobeS10_tb", "CIP_pixel_3x3_PE_tb_function" "functional"
+`timescale 1us/1ns
+
+module s10_cip_pixel_3x3_pe_tb_function (
+    WR_EN, WGT_RST, WGT_REG_IN, OCAP_REG_IN, CLK_WGT_RT, CLK_WGT_DN, CLK_OCAP_RT, // Reg. array control
+    PRECHARGE, DIFF_EN, CLK_CMP, RD_EN, mode, reset, sel );
+
+    output reg WR_EN;
+    output reg WGT_RST;
+    output reg [2:0] WGT_REG_IN;
+    output reg [3:0] OCAP_REG_IN;
+    output reg CLK_WGT_RT;
+    output reg CLK_WGT_DN;
+    output reg CLK_OCAP_RT;
+
+    output reg PRECHARGE;
+    output reg DIFF_EN;
+    output reg CLK_CMP;
+    output reg RD_EN;
+
+    output reg mode;
+    output reg [2:0] reset;
+    output reg [2:0] sel;
+
+    wire [2:0] WGT_REG [32:0];
+    wire [4:0] OCAP_REG [10:0];
+    // assign WEIGHT_REG_O[0] = 42'b1101100_1000110_0101110_1001100_0001011_0010110;
+    assign WGT_REG[32] = 3'b000;
+    assign WGT_REG[31] = 3'b000;
+    assign WGT_REG[30] = 3'b000;
+    assign WGT_REG[29] = 3'b111;
+    assign WGT_REG[28] = 3'b111;
+    assign WGT_REG[27] = 3'b001;
+    assign WGT_REG[26] = 3'b001;
+    assign WGT_REG[25] = 3'b001;
+    assign WGT_REG[24] = 3'b000;
+    assign WGT_REG[23] = 3'b011;
+    assign WGT_REG[22] = 3'b000;
+    assign WGT_REG[21] = 3'b000;
+    assign WGT_REG[20] = 3'b000;
+    assign WGT_REG[19] = 3'b000;
+    assign WGT_REG[18] = 3'b011;
+    assign WGT_REG[17] = 3'b001;
+    assign WGT_REG[16] = 3'b000;
+    assign WGT_REG[15] = 3'b101;
+    assign WGT_REG[14] = 3'b110;
+    assign WGT_REG[13] = 3'b100;
+    assign WGT_REG[12] = 3'b100;
+    assign WGT_REG[11] = 3'b000;
+    assign WGT_REG[10] = 3'b001;
+    assign WGT_REG[9]  = 3'b001;
+    assign WGT_REG[8]  = 3'b001;
+    assign WGT_REG[7]  = 3'b001;
+    assign WGT_REG[6]  = 3'b000;
+    assign WGT_REG[5]  = 3'b011;
+    assign WGT_REG[4]  = 3'b011;
+    assign WGT_REG[3]  = 3'b111;
+    assign WGT_REG[2]  = 3'b000;
+    assign WGT_REG[1]  = 3'b000;
+    assign WGT_REG[0]  = 3'b100;
+
+    assign OCAP_REG[10] = 5'b00000;
+    assign OCAP_REG[9]  = 5'b00111;
+    assign OCAP_REG[8]  = 5'b00110;
+    assign OCAP_REG[7]  = 5'b00110;
+    assign OCAP_REG[6]  = 5'b00110;
+    assign OCAP_REG[5]  = 5'b00010;
+    assign OCAP_REG[4]  = 5'b00000;
+    assign OCAP_REG[3]  = 5'b00110;
+    assign OCAP_REG[2]  = 5'b00110;
+    assign OCAP_REG[1]  = 5'b00111;
+    assign OCAP_REG[0]  = 5'b01110;
+
+    integer COUNTER;
+
+    initial begin
+        WR_EN = 0;
+        WGT_RST = 0;
+        WGT_REG_IN = 3'd0;
+        OCAP_REG_IN = 4'd0;
+        CLK_WGT_RT = 0;
+        CLK_WGT_DN = 0;
+        CLK_OCAP_RT = 0;
+        mode = 1;
+        reset = 3'b111;
+        sel = 3'b000;
+
+        PRECHARGE = 1;
+        DIFF_EN = 0;
+        CLK_CMP = 0;
+        RD_EN = 0;
+
+        COUNTER = 0;
+
+        #1 WGT_RST = 1;
+        #1 WGT_RST = 0;
+
+        repeat(33) begin
+        #1 WGT_REG_IN = WGT_REG[32 - COUNTER];
+        #1 WR_EN = 1;
+        #1 CLK_WGT_RT = 1;
+        #1 CLK_WGT_RT = 0;
+        #1 WR_EN = 0;
+           COUNTER = COUNTER + 1;
+        end
+
+        #1 COUNTER = 0;
+
+        // Write reg. array
+        repeat(11) begin
+        #1 OCAP_REG_IN = OCAP_REG[10 - COUNTER][3:0];
+        #1 WR_EN = 1;
+        #1 CLK_OCAP_RT = 1;
+        #1 CLK_OCAP_RT = 0;
+        #1 WR_EN = 0;
+           COUNTER = COUNTER + 1;
+        end
+
+        //compute
+        #10 PRECHARGE = 0;
+        #2  PRECHARGE = 1;
+        #100 DIFF_EN = 1;
+        #1  CLK_CMP = 1;
+        #1  RD_EN = 1;
+        #1  RD_EN = 0;
+        #10 CLK_CMP = 0;
+        #1  DIFF_EN = 0;
+
+        // Shift right
+        #1 CLK_WGT_RT = 1;
+        #1 CLK_WGT_RT = 0;
+
+        //compute
+        #1  PRECHARGE = 0;
+        #2  PRECHARGE = 1;
+        #100 DIFF_EN = 1;
+        #1  CLK_CMP = 1;
+        #1  RD_EN = 1;
+        #1  RD_EN = 0;
+        #10 CLK_CMP = 0;
+        #1  DIFF_EN = 0;
+
+        // Shift right
+        #1 CLK_WGT_RT = 1;
+        #1 CLK_WGT_RT = 0;
+
+        //compute
+        #1  PRECHARGE = 0;
+        #2  PRECHARGE = 1;
+        #100 DIFF_EN = 1;
+        #1  CLK_CMP = 1;
+        #1  RD_EN = 1;
+        #1  RD_EN = 0;
+        #10 CLK_CMP = 0;
+        #1  DIFF_EN = 0;
+
+        // Shift right
+        #1 CLK_WGT_RT = 1;
+        #1 CLK_WGT_RT = 0;
+
+        //compute
+        #1  PRECHARGE = 0;
+        #2  PRECHARGE = 1;
+        #100 DIFF_EN = 1;
+        #1  CLK_CMP = 1;
+        #1  RD_EN = 1;
+        #1  RD_EN = 0;
+        #10 CLK_CMP = 0;
+        #1  DIFF_EN = 0;
+
+        #10 CLK_WGT_DN = 1;
+        #1  CLK_WGT_DN = 0;
+        #10 CLK_WGT_DN = 1;
+        #1  CLK_WGT_DN = 0;
+        #10 CLK_WGT_DN = 1;
+        #1  CLK_WGT_DN = 0;
+
+    end
+
+endmodule
+
+
+
+
+
+
+
+
+    
