@@ -1,0 +1,482 @@
+`timescale 1ns / 10ps
+
+module CIM_TOP_tb(
+    CLK, RST, SELECT,
+    ADDR_IN, DATA_IN, ADDR_IN_EN, DATA_IN_EN,
+    WRITE_EN, READ_EN,
+    CIM_IN, CIM_IN_EN, CIM_OUT_EN, COMPUTE_EN, FC_OUT_EN
+    );
+
+    output reg      CLK;
+    output reg      RST;
+    output reg      [1:0] SELECT;
+    output wire     ADDR_IN;
+    output wire     DATA_IN;
+    output wire     ADDR_IN_EN;
+    output wire     DATA_IN_EN;
+    output wire     WRITE_EN;
+    output wire     READ_EN;
+    output wire     CIM_IN;
+    output wire     CIM_IN_EN;
+    output wire     CIM_OUT_EN;
+    output wire     COMPUTE_EN;
+    output reg      FC_OUT_EN;
+
+    reg      conv2_ADDR_IN;
+    reg      conv2_DATA_IN;
+    reg      conv2_ADDR_IN_EN;
+    reg      conv2_DATA_IN_EN;
+    reg      conv2_WRITE_EN;
+    reg      conv2_READ_EN;
+    reg      conv2_CIM_IN;
+    reg      conv2_CIM_IN_EN;
+    reg      conv2_CIM_OUT_EN;
+    reg      conv2_COMPUTE_EN;
+    reg      conv2_FC_OUT_EN;
+
+    reg      conv2_start_write;
+    reg      conv2_start_read;
+    reg      conv2_start_compute;
+    reg      [31:0] weight_conv2[89:0];
+    reg      [7:0]  conv2_addr_reg_write;
+    reg      [7:0]  conv2_addr_reg_read;
+    reg      [3:0]  conv2_counter_addr;
+    reg      [7:0]  conv2_counter_data;
+    reg      [7:0]  conv2_counter_read;
+    reg      [7:0]  conv2_counter_cimin;
+    reg      [1:0]  conv2_counter_compute;
+    reg      [6:0]  conv2_counter_cimout;
+
+    reg      conv3_ADDR_IN;
+    reg      conv3_DATA_IN;
+    reg      conv3_ADDR_IN_EN;
+    reg      conv3_DATA_IN_EN;
+    reg      conv3_WRITE_EN;
+    reg      conv3_READ_EN;
+    reg      conv3_CIM_IN;
+    reg      conv3_CIM_IN_EN;
+    reg      conv3_CIM_OUT_EN;
+    reg      conv3_COMPUTE_EN;
+    reg      conv3_FC_OUT_EN;
+
+    reg      conv3_start_write;
+    reg      conv3_start_read;
+    reg      conv3_start_compute;
+    reg      [127:0] weight_conv3 [71:0];
+    reg      [7:0]   conv3_addr_reg_write;
+    reg      [7:0]   conv3_addr_reg_read;
+    reg      [3:0]   conv3_counter_addr;
+    reg      [7:0]   conv3_counter_data;
+    reg      [7:0]   conv3_counter_read;
+    reg      [9:0]   conv3_counter_cimin;
+    reg      [1:0]   conv3_counter_compute;
+    reg      [6:0]   conv3_counter_cimout;
+
+    reg      fc_ADDR_IN;
+    reg      fc_DATA_IN;
+    reg      fc_ADDR_IN_EN;
+    reg      fc_DATA_IN_EN;
+    reg      fc_WRITE_EN;
+    reg      fc_READ_EN;
+    reg      fc_CIM_IN;
+    reg      fc_CIM_IN_EN;
+    reg      fc_CIM_OUT_EN;
+    reg      fc_COMPUTE_EN;
+
+    reg      fc_start_write;
+    reg      fc_start_read;
+    reg      fc_start_compute;
+    reg      [89:0]  weight_fc [127:0];
+    reg      [7:0]   fc_addr_reg_write;
+    reg      [7:0]   fc_addr_reg_read;
+    reg      [3:0]   fc_counter_addr;
+    reg      [7:0]   fc_counter_data;
+    reg      [7:0]   fc_counter_read;
+    reg      [11:0]  fc_counter_cimin;
+    reg      [1:0]   fc_counter_compute;
+    reg      [6:0]   fc_counter_cimout;
+
+initial begin
+        CLK = 0;
+        forever #50 CLK = ~CLK;
+    end
+
+    initial begin
+        $readmemb("/home/jiangwh/aDobeS9/weight_conv2.txt", weight_conv2);
+        $readmemb("/home/jiangwh/aDobeS9/weight_conv3.txt", weight_conv3);
+        $readmemb("/home/jiangwh/aDobeS9/weight_fc.txt", weight_fc);
+        RST = 0;
+        SELECT = 2'b0;
+        conv2_start_write = 0;
+        conv2_start_read = 0;
+        conv2_start_compute = 0;
+        conv3_start_write = 0;
+        conv3_start_read = 0;
+        conv3_start_compute = 0;
+        fc_start_write = 0;
+        fc_start_read = 0;
+        fc_start_compute = 0;
+        #100      RST = 1;
+        #100      RST = 0;
+//        #1000     conv2_start_write = 1;
+//        #3000000  conv2_start_write = 0;    //3ms for write is enough
+//        #2000000  conv2_start_read = 1;
+//        #3000000  conv2_start_read = 0;     //3ms for read is enough
+        #2000000  conv2_start_compute = 1;
+        #1000000  conv2_start_compute = 0;    //1ms for compute is enough
+
+        #2000000  SELECT = 2'b01;
+//        #2000000  conv3_start_write = 1;
+//        #3000000  conv3_start_write = 0;    //3ms for write is enough
+//        #2000000  conv3_start_read = 1;
+//        #3000000  conv3_start_read = 0;     //3ms for read is enough
+        #2000000  conv3_start_compute = 1;
+        #1000000  conv3_start_compute = 0;    //1ms for compute is enough
+
+        #2000000  SELECT = 2'b10;
+//        #2000000  fc_start_write = 1;
+//        #3000000  fc_start_write = 0;       //3ms for write is enough
+//        #2000000  fc_start_read = 1;
+//        #3000000  fc_start_read = 0;        //3ms for read is enough
+        #2000000  fc_start_compute = 1;
+        #1000000  fc_start_compute = 0;       //1ms for compute is enough
+    end
+always @(negedge CLK or posedge RST) begin
+        if(RST) begin
+            conv2_ADDR_IN       <= 0;
+            conv2_DATA_IN       <= 0;
+            conv2_ADDR_IN_EN    <= 0;
+            conv2_DATA_IN_EN    <= 0;
+            conv2_WRITE_EN      <= 0;
+            conv2_READ_EN       <= 0;
+            conv2_CIM_IN        <= 0;
+            conv2_CIM_IN_EN     <= 0;
+            conv2_CIM_OUT_EN    <= 0;
+            conv2_COMPUTE_EN    <= 0;
+            conv2_FC_OUT_EN     <= 0;
+            conv2_addr_reg_write<= 0;
+            conv2_addr_reg_read <= 0;
+            conv2_counter_addr  <= 0;
+            conv2_counter_data  <= 0;
+            conv2_counter_read  <= 0;
+            conv2_counter_cimin <= 0;
+            conv2_counter_compute <= 0;
+            conv2_counter_cimout<= 0;
+        end
+        else if(conv2_start_write && conv2_addr_reg_write < 8'd90) begin
+            if(conv2_counter_addr < 4'd7) begin
+                conv2_WRITE_EN      <= 0;
+                conv2_ADDR_IN_EN    <= 1;
+                conv2_ADDR_IN       <= conv2_addr_reg_write[6 - conv2_counter_addr];
+                conv2_counter_addr  <= conv2_counter_addr + 1;
+            end
+            else if(conv2_counter_data < 8'd96) begin
+                conv2_ADDR_IN_EN    <= 0;
+                conv2_DATA_IN_EN    <= 1;
+                conv2_DATA_IN       <= 0;
+                conv2_counter_data  <= conv2_counter_data + 1;
+            end
+            else if(conv2_counter_data < 8'd128) begin
+                conv2_DATA_IN_EN    <= 1;
+                conv2_DATA_IN       <= weight_conv2[conv2_addr_reg_write][127 - conv2_counter_data];
+                conv2_counter_data  <= conv2_counter_data + 1;
+            end
+            else if(!conv2_WRITE_EN) begin
+                conv2_ADDR_IN_EN    <= 0;
+                conv2_DATA_IN_EN    <= 0;
+                conv2_WRITE_EN      <= 1;
+                conv2_counter_addr  <= 0;
+                conv2_counter_data  <= 0;
+                conv2_addr_reg_write<= conv2_addr_reg_write + 1;
+            end
+        end
+
+        else if(conv2_start_read && conv2_addr_reg_read < 8'd90) begin
+            if(conv2_counter_addr < 4'd7) begin
+                conv2_ADDR_IN_EN    <= 1;
+                conv2_ADDR_IN       <= conv2_addr_reg_read[6 - conv2_counter_addr];
+                conv2_counter_addr  <= conv2_counter_addr + 1;
+            end
+            else if(conv2_counter_read < 8'd130) begin
+                conv2_ADDR_IN_EN    <= 0;
+                conv2_ADDR_IN       <= 0;
+                conv2_READ_EN       <= 1;
+                conv2_counter_read  <= conv2_counter_read + 1;
+            end
+            else if(conv2_counter_read == 8'd130) begin
+                conv2_READ_EN       <= 0;
+                conv2_addr_reg_read <= conv2_addr_reg_read + 1;
+                conv2_counter_addr  <= 0;
+                conv2_counter_read  <= 0;
+            end
+        end
+
+        else if(conv2_start_compute) begin
+            if(conv2_counter_cimin < 8'd90) begin
+                conv2_CIM_IN_EN     <= 1;
+                conv2_CIM_IN        <= 1;
+                conv2_counter_cimin <= conv2_counter_cimin + 1;
+            end
+            else if(conv2_counter_cimin < 8'd180) begin
+                conv2_CIM_IN_EN     <= 1;
+                conv2_CIM_IN        <= 0;
+                conv2_counter_cimin <= conv2_counter_cimin + 1;
+            end
+            else if(conv2_counter_compute < 2'd3) begin
+                conv2_CIM_IN_EN     <= 0;
+                if(conv2_counter_compute > 0) conv2_COMPUTE_EN <= 1;
+                conv2_counter_compute <= conv2_counter_compute + 1;
+            end
+            else if(conv2_counter_cimout < 7'd64) begin
+                if(conv2_counter_cimout > 0) conv2_COMPUTE_EN <= 0;
+                conv2_CIM_OUT_EN    <= 1;
+                conv2_counter_cimout<= conv2_counter_cimout + 1;
+            end
+            else begin
+                conv2_CIM_OUT_EN    <= 0;
+            end
+        end
+
+        else begin
+            conv2_ADDR_IN       <= 0;
+            conv2_DATA_IN       <= 0;
+            conv2_ADDR_IN_EN    <= 0;
+            conv2_DATA_IN_EN    <= 0;
+            conv2_WRITE_EN      <= 0;
+            conv2_READ_EN       <= 0;
+            conv2_CIM_IN        <= 0;
+            conv2_CIM_IN_EN     <= 0;
+            conv2_CIM_OUT_EN    <= 0;
+            conv2_COMPUTE_EN    <= 0;
+        end
+    end
+
+    always @(negedge CLK or posedge RST) begin
+        if(RST) begin
+            conv3_ADDR_IN       <= 0;
+            conv3_DATA_IN       <= 0;
+            conv3_ADDR_IN_EN    <= 0;
+            conv3_DATA_IN_EN    <= 0;
+            conv3_WRITE_EN      <= 0;
+            conv3_READ_EN       <= 0;
+            conv3_CIM_IN        <= 0;
+            conv3_CIM_IN_EN     <= 0;
+            conv3_CIM_OUT_EN    <= 0;
+            conv3_COMPUTE_EN    <= 0;
+            conv3_FC_OUT_EN     <= 0;
+            conv3_addr_reg_write<= 0;
+            conv3_addr_reg_read <= 0;
+            conv3_counter_addr  <= 0;
+            conv3_counter_data  <= 0;
+            conv3_counter_read  <= 0;
+            conv3_counter_cimin <= 0;
+            conv3_counter_compute <= 0;
+            conv3_counter_cimout<= 0;
+        end
+        else if(conv3_start_write && conv3_addr_reg_write < 8'd72) begin
+            if(conv3_counter_addr < 4'd7) begin
+                conv3_WRITE_EN      <= 0;
+                conv3_ADDR_IN_EN    <= 1;
+                conv3_ADDR_IN       <= conv3_addr_reg_write[6 - conv3_counter_addr];
+                conv3_counter_addr  <= conv3_counter_addr + 1;
+            end
+            else if(conv3_counter_data < 8'd128) begin
+                conv3_ADDR_IN_EN    <= 0;
+                conv3_DATA_IN_EN    <= 1;
+                conv3_DATA_IN       <= weight_conv3[conv3_addr_reg_write][127 - conv3_counter_data];
+                conv3_counter_data  <= conv3_counter_data + 1;
+            end
+            else if(!conv3_WRITE_EN) begin
+                conv3_ADDR_IN_EN    <= 0;
+                conv3_DATA_IN_EN    <= 0;
+                conv3_WRITE_EN      <= 1;
+                conv3_counter_addr  <= 0;
+                conv3_counter_data  <= 0;
+                conv3_addr_reg_write<= conv3_addr_reg_write + 1;
+            end
+        end
+
+        else if(conv3_start_read && conv3_addr_reg_read < 8'd72) begin
+            if(conv3_counter_addr < 4'd7) begin
+                conv3_ADDR_IN_EN    <= 1;
+                conv3_ADDR_IN       <= conv3_addr_reg_read[6 - conv3_counter_addr];
+                conv3_counter_addr  <= conv3_counter_addr + 1;
+            end
+            else if(conv3_counter_read < 8'd130) begin
+                conv3_ADDR_IN_EN    <= 0;
+                conv3_ADDR_IN       <= 0;
+                conv3_READ_EN       <= 1;
+                conv3_counter_read  <= conv3_counter_read + 1;
+            end
+            else if(conv3_counter_read == 8'd130) begin
+                conv3_READ_EN       <= 0;
+                conv3_addr_reg_read <= conv3_addr_reg_read + 1;
+                conv3_counter_addr  <= 0;
+                conv3_counter_read  <= 0;
+            end
+        end
+
+        else if(conv3_start_compute) begin
+            if(conv3_counter_cimin < 10'd288) begin
+                conv3_CIM_IN_EN     <= 1;
+                conv3_CIM_IN        <= 1;
+                conv3_counter_cimin <= conv3_counter_cimin + 1;
+            end
+            else if(conv3_counter_cimin < 10'd576) begin
+                conv3_CIM_IN_EN     <= 1;
+                conv3_CIM_IN        <= 0;
+                conv3_counter_cimin <= conv3_counter_cimin + 1;
+            end
+            else if(conv3_counter_compute < 2'd3) begin
+                conv3_CIM_IN_EN     <= 0;
+                if(conv3_counter_compute > 0) conv3_COMPUTE_EN <= 1;
+                conv3_counter_compute <= conv3_counter_compute + 1;
+            end
+            else if(conv3_counter_cimout < 7'd64) begin
+                if(conv3_counter_cimout > 0) conv3_COMPUTE_EN <= 0;
+                conv3_CIM_OUT_EN    <= 1;
+                conv3_counter_cimout<= conv3_counter_cimout + 1;
+            end
+            else begin
+                conv3_CIM_OUT_EN    <= 0;
+            end
+        end
+
+        else begin
+            conv3_ADDR_IN       <= 0;
+            conv3_DATA_IN       <= 0;
+            conv3_ADDR_IN_EN    <= 0;
+            conv3_DATA_IN_EN    <= 0;
+            conv3_WRITE_EN      <= 0;
+            conv3_READ_EN       <= 0;
+            conv3_CIM_IN        <= 0;
+            conv3_CIM_IN_EN     <= 0;
+            conv3_CIM_OUT_EN    <= 0;
+            conv3_COMPUTE_EN    <= 0;
+        end
+    end
+
+    always @(negedge CLK or posedge RST) begin
+        if(RST) begin
+            fc_ADDR_IN          <= 0;
+            fc_DATA_IN          <= 0;
+            fc_ADDR_IN_EN       <= 0;
+            fc_DATA_IN_EN       <= 0;
+            fc_WRITE_EN         <= 0;
+            fc_READ_EN          <= 0;
+            fc_CIM_IN           <= 0;
+            fc_CIM_IN_EN        <= 0;
+            fc_CIM_OUT_EN       <= 0;
+            fc_COMPUTE_EN       <= 0;
+            FC_OUT_EN           <= 0;
+            fc_addr_reg_write   <= 0;
+            fc_addr_reg_read    <= 0;
+            fc_counter_addr     <= 0;
+            fc_counter_data     <= 0;
+            fc_counter_read     <= 0;
+            fc_counter_cimin    <= 0;
+            fc_counter_compute  <= 0;
+            fc_counter_cimout   <= 0;
+        end
+        else if(fc_start_write && fc_addr_reg_write < 8'd128) begin
+            if(fc_counter_addr < 4'd7) begin
+                fc_WRITE_EN         <= 0;
+                fc_ADDR_IN_EN       <= 1;
+                fc_ADDR_IN          <= fc_addr_reg_write[6 - fc_counter_addr];
+                fc_counter_addr     <= fc_counter_addr + 1;
+            end
+            else if(fc_counter_data < 8'd38) begin
+                fc_ADDR_IN_EN       <= 0;
+                fc_DATA_IN_EN       <= 1;
+                fc_DATA_IN          <= 0;
+                fc_counter_data     <= fc_counter_data + 1;
+            end
+            else if(fc_counter_data < 8'd128) begin
+                fc_DATA_IN_EN       <= 1;
+                fc_DATA_IN          <= weight_fc[fc_addr_reg_write][127 - fc_counter_data];
+                fc_counter_data     <= fc_counter_data + 1;
+            end
+            else if(!fc_WRITE_EN) begin
+                fc_ADDR_IN_EN       <= 0;
+                fc_DATA_IN_EN       <= 0;
+                fc_WRITE_EN         <= 1;
+                fc_counter_addr     <= 0;
+                fc_counter_data     <= 0;
+                fc_addr_reg_write   <= fc_addr_reg_write + 1;
+            end
+        end
+
+        else if(fc_start_read && fc_addr_reg_read < 8'd128) begin
+            if(fc_counter_addr < 4'd7) begin
+                fc_ADDR_IN_EN       <= 1;
+                fc_ADDR_IN          <= fc_addr_reg_read[6 - fc_counter_addr];
+                fc_counter_addr     <= fc_counter_addr + 1;
+            end
+            else if(fc_counter_read < 8'd130) begin
+                fc_ADDR_IN_EN       <= 0;
+                fc_ADDR_IN          <= 0;
+                fc_READ_EN          <= 1;
+                fc_counter_read     <= fc_counter_read + 1;
+            end
+            else if(fc_counter_read == 8'd130) begin
+                fc_READ_EN          <= 0;
+                fc_addr_reg_read    <= fc_addr_reg_read + 1;
+                fc_counter_addr     <= 0;
+                fc_counter_read     <= 0;
+            end
+        end
+
+        else if(fc_start_compute) begin
+            if(fc_counter_cimin < 12'd1152) begin
+                fc_CIM_IN_EN        <= 1;
+                fc_CIM_IN           <= 1;
+                fc_counter_cimin    <= fc_counter_cimin + 1;
+            end
+            else if(fc_counter_cimin < 12'd2304) begin
+                fc_CIM_IN_EN        <= 1;
+                fc_CIM_IN           <= 0;
+                fc_counter_cimin    <= fc_counter_cimin + 1;
+            end
+            else if(fc_counter_compute < 2'd3) begin
+                fc_CIM_IN_EN        <= 0;
+                if(fc_counter_compute > 0) fc_COMPUTE_EN <= 1;
+                fc_counter_compute  <= fc_counter_compute + 1;
+            end
+            else if(fc_counter_cimout < 7'd64) begin
+                fc_COMPUTE_EN       <= 1;
+                FC_OUT_EN           <= 1;
+                fc_counter_cimout   <= fc_counter_cimout + 1;
+            end
+            else begin
+                fc_COMPUTE_EN       <= 0;
+                FC_OUT_EN           <= 0;
+            end
+        end
+
+        else begin
+            fc_ADDR_IN          <= 0;
+            fc_DATA_IN          <= 0;
+            fc_ADDR_IN_EN       <= 0;
+            fc_DATA_IN_EN       <= 0;
+            fc_WRITE_EN         <= 0;
+            fc_READ_EN          <= 0;
+            fc_CIM_IN           <= 0;
+            fc_CIM_IN_EN        <= 0;
+            fc_CIM_OUT_EN       <= 0;
+            fc_COMPUTE_EN       <= 0;
+            FC_OUT_EN           <= 0;
+        end
+    end
+
+    assign ADDR_IN = (SELECT == 2'b00)? conv2_ADDR_IN : ((SELECT == 2'b01)? conv3_ADDR_IN : fc_ADDR_IN);
+    assign DATA_IN = (SELECT == 2'b00)? conv2_DATA_IN : ((SELECT == 2'b01)? conv3_DATA_IN : fc_DATA_IN);
+    assign ADDR_IN_EN = (SELECT == 2'b00)? conv2_ADDR_IN_EN : ((SELECT == 2'b01)? conv3_ADDR_IN_EN : fc_ADDR_IN_EN);
+    assign DATA_IN_EN = (SELECT == 2'b00)? conv2_DATA_IN_EN : ((SELECT == 2'b01)? conv3_DATA_IN_EN : fc_DATA_IN_EN);
+    assign WRITE_EN = (SELECT == 2'b00)? conv2_WRITE_EN : ((SELECT == 2'b01)? conv3_WRITE_EN : fc_WRITE_EN);
+    assign READ_EN = (SELECT == 2'b00)? conv2_READ_EN : ((SELECT == 2'b01)? conv3_READ_EN : fc_READ_EN);
+    assign CIM_IN = (SELECT == 2'b00)? conv2_CIM_IN : ((SELECT == 2'b01)? conv3_CIM_IN : fc_CIM_IN);
+    assign CIM_IN_EN = (SELECT == 2'b00)? conv2_CIM_IN_EN : ((SELECT == 2'b01)? conv3_CIM_IN_EN : fc_CIM_IN_EN);
+    assign CIM_OUT_EN = (SELECT == 2'b00)? conv2_CIM_OUT_EN : ((SELECT == 2'b01)? conv3_CIM_OUT_EN : fc_CIM_OUT_EN);
+    assign COMPUTE_EN = (SELECT == 2'b00)? conv2_COMPUTE_EN : ((SELECT == 2'b01)? conv3_COMPUTE_EN : fc_COMPUTE_EN);
+
+endmodule
