@@ -1,0 +1,171 @@
+`timescale 1ns / 10ps
+
+module CIM_TOP_CONV2_tb(
+    CLK, RST, SELECT,
+    ADDR_IN, DATA_IN, ADDR_IN_EN, DATA_IN_EN,
+    WRITE_EN, READ_EN,
+    CIM_IN, CIM_IN_EN, CIM_OUT_EN, COMPUTE_EN, FC_OUT_EN
+);
+
+output  reg         CLK;
+output  reg         RST;
+output  reg [1:0]   SELECT;
+output  reg         ADDR_IN;
+output  reg         DATA_IN;
+output  reg         ADDR_IN_EN;
+output  reg         DATA_IN_EN;
+output  reg         WRITE_EN;
+output  reg         READ_EN;
+output  reg         CIM_IN;
+output  reg         CIM_IN_EN;
+output  reg         CIM_OUT_EN;
+output  reg         COMPUTE_EN;
+output  reg         FC_OUT_EN;
+
+reg                 start_write;
+reg                 start_read;
+reg                 start_compute;
+reg     [31:0]      weight_conv2[89:0];
+reg     [7:0]       addr_reg_write;
+reg     [7:0]       addr_reg_read;
+reg     [3:0]       counter_addr;
+reg     [7:0]       counter_data;
+reg     [7:0]       counter_read;
+reg     [7:0]       counter_cimin;
+reg     [1:0]       counter_compute;
+reg     [6:0]       counter_cimout;
+
+initial begin
+    CLK = 0;
+    forever #50 CLK = ~CLK;
+end
+
+initial begin
+//  $readmemb("C:/Users/jwh22/Desktop/weight_conv2.txt", weight_conv2);
+    $readmemb("/home/jiangwh/aDobeS9/weight_conv2.txt", weight_conv2);
+    RST = 0;
+    start_write = 0;
+    start_read = 0;
+    start_compute = 0;
+    #100        RST = 1;
+    #100        RST = 0;
+    #1000       start_write = 1;
+    #5000000    start_write = 0;    //5ms for write is enough
+    #1000       start_read = 1;
+    #5000000    start_read = 0;     //5ms for read is enough
+    #1000       start_compute = 1;
+end
+
+always @(negedge CLK or posedge RST) begin
+    if(RST) begin
+        SELECT              <= 2'b0;
+        ADDR_IN             <= 0;
+        DATA_IN             <= 0;
+        ADDR_IN_EN          <= 0;
+        DATA_IN_EN          <= 0;
+        WRITE_EN            <= 0;
+        READ_EN             <= 0;
+        CIM_IN              <= 0;
+        CIM_IN_EN           <= 0;
+        CIM_OUT_EN          <= 0;
+        COMPUTE_EN          <= 0;
+        FC_OUT_EN           <= 0;
+        addr_reg_write      <= 0;
+        addr_reg_read       <= 0;
+        counter_addr        <= 0;
+        counter_data        <= 0;
+        counter_read        <= 0;
+        counter_cimin       <= 0;
+        counter_compute     <= 0;
+        counter_cimout      <= 0;
+    end
+    else if(start_write && addr_reg_write < 8'd90) begin
+        if(counter_addr < 4'd7) begin
+            WRITE_EN        <= 0;
+            ADDR_IN_EN      <= 1;
+            ADDR_IN         <= addr_reg_write[6 - counter_addr];
+            counter_addr    <= counter_addr + 1;
+        end
+        else if(counter_data < 8'd96) begin
+            ADDR_IN_EN      <= 0;
+            DATA_IN_EN      <= 1;
+            DATA_IN         <= 0;
+            counter_data    <= counter_data + 1;
+        end
+        else if(counter_data < 8'd128) begin
+            DATA_IN_EN      <= 1;
+            DATA_IN         <= weight_conv2[addr_reg_write][127 - counter_data];
+            counter_data    <= counter_data + 1;
+        end
+        else if(!WRITE_EN) begin
+            ADDR_IN_EN      <= 0;
+            DATA_IN_EN      <= 0;
+            WRITE_EN        <= 1;
+            counter_addr    <= 0;
+            counter_data    <= 0;
+            addr_reg_write  <= addr_reg_write + 1;
+        end
+    end
+
+    else if(start_read && addr_reg_read < 8'd90) begin
+        if(counter_addr < 4'd7) begin
+            ADDR_IN_EN      <= 1;
+            ADDR_IN         <= addr_reg_read[6 - counter_addr];
+            counter_addr    <= counter_addr + 1;
+        end
+        else if(counter_read < 8'd130) begin
+            ADDR_IN_EN      <= 0;
+            ADDR_IN         <= 0;
+            READ_EN         <= 1;
+            counter_read    <= counter_read + 1;
+        end
+        else if(counter_read == 8'd130) begin
+            READ_EN         <= 0;
+            addr_reg_read   <= addr_reg_read + 1;
+            counter_addr    <= 0;
+            counter_read    <= 0;
+        end
+    end
+
+    else if(start_compute) begin
+        if(counter_cimin < 8'd90) begin
+            CIM_IN_EN       <= 1;
+            CIM_IN          <= 1;
+            counter_cimin   <= counter_cimin + 1;
+        end
+        else if(counter_cimin < 8'd180) begin
+            CIM_IN_EN       <= 1;
+            CIM_IN          <= 0;
+            counter_cimin   <= counter_cimin + 1;
+        end
+        else if(counter_compute < 2'd3) begin
+            CIM_IN_EN       <= 0;
+            if(counter_compute > 0) COMPUTE_EN <= 1;
+            counter_compute <= counter_compute + 1;
+        end
+        else if(counter_cimout < 7'd64) begin
+            if(counter_cimout > 0) COMPUTE_EN <= 0;
+            CIM_OUT_EN      <= 1;
+            counter_cimout  <= counter_cimout + 1;
+        end
+        else begin
+            CIM_OUT_EN      <= 0;
+        end
+    end
+
+    else begin
+        SELECT              <= 2'b0;
+        ADDR_IN             <= 0;
+        DATA_IN             <= 0;
+        ADDR_IN_EN          <= 0;
+        DATA_IN_EN          <= 0;
+        WRITE_EN            <= 0;
+        READ_EN             <= 0;
+        CIM_IN              <= 0;
+        CIM_IN_EN           <= 0;
+        CIM_OUT_EN          <= 0;
+        COMPUTE_EN          <= 0;
+    end
+end
+
+endmodule
