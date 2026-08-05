@@ -40,9 +40,16 @@ initial begin
     forever #50 CLK = ~CLK;
 end
 
+integer i;
+
 initial begin
-//  $readmemb("C:/Users/jwh22/Desktop/weight_conv2.txt", weight_conv2);
-    $readmemb("/home/jiangwh/aDobeS9/weight_conv2.txt", weight_conv2);
+
+    i；
+    while（i<90）begin
+        weight_conv2[i]=32'hFFFF_FFFF;
+        i=i+1;
+    end
+
     RST = 0;
     start_write = 0;
     start_read = 0;
