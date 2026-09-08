@@ -240,6 +240,95 @@ module main (
                     end
                     o_compute_select <= NONE;
                 end
+                TEST_TX_CONV1: begin
+                if (count <= size::ACTI1.CHANNEL - 1) begin
+                    count             <= count + 1;
+                    o_uart_write_en   <= 1;
+                    o_uart_write_data <= (i_activation_read_code[count] == ENCODE[2'b01])? "+":
+                                         (i_activation_read_code[count] == ENCODE[2'b00])? "0":
+                                         (i_activation_read_code[count] == ENCODE[2'b11])? "-": "x";
+                end else if (count == size::ACTI1.CHANNEL) begin
+                    count             <= count + 1;
+                    o_uart_write_en   <= 1;
+                    o_uart_write_data <= "\n";
+                end else if (count == size::ACTI1.CHANNEL + 1) begin
+                    count             <= count + 1;
+                    o_uart_write_en   <= 0;
+                    o_uart_write_data <= 'x;
+                end else if (done) begin // wait UART hand
+                    if (o_activation_addr == size::ACTI1.WIDTH ** 2 - 1) begin
+                        // switch to CONV2
+                        state                    <= TEST_TX_CONV2;
+                        count                    <= 0;
+                        o_activation_read_select <= CONV3; // CONV3 corresponding to ACTI2
+                        o_activation_addr        <= 0;
+                        o_message                <= "transmit conv2 activation";
+                    end else begin
+                        count             <= 0;
+                        o_activation_addr <= o_activation_addr + 1;
+                    end
+                end
+            end
+            TEST_TX_CONV2: begin
+                if (count <= size::ACTI2.CHANNEL - 1) begin
+                    count             <= count + 1;
+                    o_uart_write_en   <= 1;
+                    o_uart_write_data <= (i_activation_read_code[count] == ENCODE[2'b01])? "+":
+                                         (i_activation_read_code[count] == ENCODE[2'b00])? "0":
+                                         (i_activation_read_code[count] == ENCODE[2'b11])? "-": "x";
+                end else if (count == size::ACTI2.CHANNEL) begin
+                    count             <= count + 1;
+                    o_uart_write_en   <= 1;
+                    o_uart_write_data <= "\n";
+                end else if (count == size::ACTI2.CHANNEL + 1) begin
+                    count             <= count + 1;
+                    o_uart_write_en   <= 0;
+                    o_uart_write_data <= 'x;
+                end else if (done) begin
+                    if (o_activation_addr == size::ACTI2.WIDTH ** 2 - 1) begin
+                        // CONV2 读完，切换到 CONV3
+                        state                    <= TEST_TX_CONV3;
+                        count                    <= 0;
+                        o_activation_read_select <= FC;    // FC 输入存储区对应 ACTI3
+                        o_activation_addr        <= 0;
+                        o_message                <= "transmit conv3 activation";
+                    end else begin
+                        count             <= 0;
+                        o_activation_addr <= o_activation_addr + 1;
+                    end
+                end
+            end
+                TEST_TX_CONV3: begin
+                if (count <= size::ACTI3.CHANNEL - 1) begin
+                    count             <= count + 1;
+                    o_uart_write_en   <= 1;
+                    o_uart_write_data <= (i_activation_read_code[count] == ENCODE[2'b01])? "+":
+                                         (i_activation_read_code[count] == ENCODE[2'b00])? "0":
+                                         (i_activation_read_code[count] == ENCODE[2'b11])? "-": "x";
+                end else if (count == size::ACTI3.CHANNEL) begin
+                    count             <= count + 1;
+                    o_uart_write_en   <= 1;
+                    o_uart_write_data <= "\n";
+                end else if (count == size::ACTI3.CHANNEL + 1) begin
+                    count             <= count + 1;
+                    o_uart_write_en   <= 0;
+                    o_uart_write_data <= 'x;
+                end else if (done) begin
+                    if (o_activation_addr == size::ACTI3.WIDTH ** 2 - 1) begin
+                        // 全部特征图发送完成，最后发送单个分类结果与回车
+                        state                    <= IDLE;
+                        count                    <= 'x;
+                        o_activation_addr        <= 'x;
+                        o_activation_read_select <= NONE;
+                        o_uart_write_en          <= 1;
+                        o_uart_write_data        <= i_result + "0";
+                        o_message                <= "";
+                    end else begin
+                        count             <= 0;
+                        o_activation_addr <= o_activation_addr + 1;
+                    end
+                end
+            end
                 PIPLINE_COMPUTE: begin
                     if (!i_uart_rx_fifo_empty) begin
                         state            <= PIPLINE_TX;
