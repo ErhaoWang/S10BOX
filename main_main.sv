@@ -53,6 +53,7 @@ module main (
         end
     end
 
+  
     enum logic [3:0] {
         IDLE,
         RX,
@@ -62,6 +63,9 @@ module main (
         UPDATE_WEIGHT,
         UPDATE_LOAD,
         TEST_COMPUTE,
+        TEST_TX_CONV1,   // send CONV1 active
+        TEST_TX_CONV2,   // send CONV2 active
+        TEST_TX_CONV3,   // send CONV3 active
         PIPLINE_COMPUTE,
         PIPLINE_TX
     } state;
